@@ -1,87 +1,87 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
 
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr + 'T00:00:00')
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }
-  return date.toLocaleDateString('ar-EG', options)
+  const date = new Date(dateStr + 'T00:00:00');
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayName = days[date.getDay()];
+  return `${dayName} ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 }
 
 function formatTime(timeStr: string) {
-  const [h, m] = timeStr.split(':')
-  const hour = parseInt(h, 10)
-  if (hour < 12) return `${hour}:${m} صباحاً`
-  if (hour === 12) return `12:${m} مساءً`
-  return `${hour - 12}:${m} مساءً`
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h);
+  if (hour === 16) return `4:${m} عصراً`;
+  if (hour === 17) return `5:${m} مساءً`;
+  if (hour === 18) return `6:${m} مساءً`;
+  if (hour === 19) return `7:${m} مساءً`;
+  if (hour === 20) return `8:${m} مساءً`;
+  if (hour === 21) return `9:${m} مساءً`;
+  return `${hour}:${m}`;
 }
 
-export default async function ConfirmationPage(props: { params: Promise<{ bookingId: string }> }) {
-  const params = await props.params
-  const supabase = await createClient()
+export default async function ConfirmationPage({
+  params,
+}: {
+  params: Promise<{ bookingId: string }>;
+}) {
+  const { bookingId } = await params;
+  const supabase = await createClient();
 
   const { data: booking, error } = await supabase
     .from('bookings')
-    .select('*, time_slots(*)')
-    .eq('id', params.bookingId)
-    .single()
+    .select(`
+      *,
+      slot:time_slots(*)
+    `)
+    .eq('id', bookingId)
+    .single();
 
   if (error || !booking) {
-    notFound()
+    notFound();
   }
 
-  const slot = booking.time_slots as { slot_date: string; slot_time: string }
-
   return (
-    <>
-      <div className="bg-green-600 text-white rounded-xl p-8 text-center shadow-lg mb-6">
+    <div className="text-center">
+      <div className="bg-green-50 border border-green-200 rounded-xl p-8 mb-6">
         <div className="text-5xl mb-4">✅</div>
-        <h2 className="text-2xl font-bold mb-2">تم الحجز بنجاح!</h2>
-        <p className="text-green-100">شكراً لك {booking.patient_name}</p>
+        <h2 className="text-2xl font-bold text-green-800 mb-2">تم الحجز بنجاح!</h2>
+        <p className="text-green-600">شكراً لك {booking.patient_name}</p>
       </div>
 
-      <div className="bg-white border border-green-200 rounded-xl p-6 shadow-sm mb-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">تفاصيل الحجز</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-500">الاسم</span>
-            <span className="font-semibold text-gray-800">{booking.patient_name}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-500">رقم الهاتف</span>
-            <span className="font-semibold text-gray-800" dir="ltr">{booking.patient_phone}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-500">التاريخ</span>
-            <span className="font-semibold text-gray-800">{formatDate(slot.slot_date)}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b border-gray-100">
-            <span className="text-gray-500">الوقت</span>
-            <span className="font-semibold text-gray-800">{formatTime(slot.slot_time)}</span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="text-gray-500">المدة</span>
-            <span className="font-semibold text-gray-800">ساعة واحدة</span>
-          </div>
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-3">تفاصيل الموعد</h3>
+        <div className="space-y-2">
+          <p className="text-gray-600">
+            <span className="font-medium">اليوم والتاريخ:</span>{' '}
+            {formatDate(booking.slot.slot_date)}
+          </p>
+          <p className="text-gray-600">
+            <span className="font-medium">الوقت:</span>{' '}
+            {formatTime(booking.slot.slot_time)}
+          </p>
+          <p className="text-gray-600">
+            <span className="font-medium">الاسم:</span> {booking.patient_name}
+          </p>
+          <p className="text-gray-600">
+            <span className="font-medium">رقم الهاتف:</span> {booking.patient_phone}
+          </p>
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 text-center mb-6">
-        <p className="text-yellow-800 font-semibold text-lg mb-1">💰 الدفع عند الحضور</p>
-        <p className="text-yellow-700">من فضلك احضر ١٠٠ جنيه مصري نقداً عند موعدك</p>
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <p className="text-yellow-800 font-medium">💰 الدفع نقداً عند الحضور — 100 جنيه</p>
+        <p className="text-yellow-600 text-sm mt-1">
+          يرجى الحضور في الموعد المحدد. إذا كنت ترغب في إلغاء الحجز، يرجى الاتصال بالعيادة.
+        </p>
       </div>
 
-      <Link
+      <a
         href="/"
-        className="block w-full text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition"
+        className="inline-block mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
       >
         العودة للصفحة الرئيسية
-      </Link>
-    </>
-  )
+      </a>
+    </div>
+  );
 }

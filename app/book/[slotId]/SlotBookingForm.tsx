@@ -1,56 +1,51 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { bookSlot } from '@/app/book/actions'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { bookSlot } from '../actions';
 
 export default function SlotBookingForm({ slotId }: { slotId: string }) {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
 
     if (!name.trim()) {
-      setError('من فضلك أدخل الاسم')
-      return
+      setError('يرجى إدخال الاسم');
+      return;
     }
     if (!phone.trim()) {
-      setError('من فضلك أدخل رقم الهاتف')
-      return
-    }
-    if (phone.trim().length < 10) {
-      setError('رقم الهاتف غير صحيح - أدخل رقم مكون من ١٠ أرقام على الأقل')
-      return
+      setError('يرجى إدخال رقم الهاتف');
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
-    const formData = new FormData()
-    formData.append('name', name.trim())
-    formData.append('phone', phone.trim())
-
-    const result = await bookSlot(slotId, formData)
-
-    if (result?.error) {
-      setError(result.error)
-      setLoading(false)
-      return
+    try {
+      const result = await bookSlot(slotId, { name: name.trim(), phone: phone.trim() });
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      }
+    } catch {
+      setError('حدث خطأ أثناء الحجز. حاول مرة أخرى.');
+      setLoading(false);
     }
-
-    if (result?.redirect) {
-      router.push(result.redirect)
-    }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+    <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="mb-4">
+        <label htmlFor="name" className="block text-gray-700 font-medium mb-1">
           الاسم الكامل
         </label>
         <input
@@ -58,14 +53,15 @@ export default function SlotBookingForm({ slotId }: { slotId: string }) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="أدخل اسمك"
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          placeholder="مثال: أحمد محمد"
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           disabled={loading}
+          autoComplete="name"
         />
       </div>
 
-      <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="mb-6">
+        <label htmlFor="phone" className="block text-gray-700 font-medium mb-1">
           رقم الهاتف
         </label>
         <input
@@ -73,25 +69,24 @@ export default function SlotBookingForm({ slotId }: { slotId: string }) {
           type="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="أدخل رقم هاتفك"
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          placeholder="مثال: 01012345678"
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
           disabled={loading}
+          autoComplete="tel"
         />
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-          {error}
-        </div>
-      )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? 'جاري تأكيد الحجز...' : 'تأكيد الحجز'}
+        {loading ? 'جاري الحجز...' : 'تأكيد الحجز'}
       </button>
+
+      <p className="text-xs text-gray-400 text-center mt-4">
+        سيتم الدفع نقداً عند الحضور — 100 جنيه
+      </p>
     </form>
-  )
+  );
 }

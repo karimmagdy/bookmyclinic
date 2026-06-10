@@ -1,71 +1,75 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import SlotBookingForm from './SlotBookingForm'
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
+import SlotBookingForm from './SlotBookingForm';
 
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr + 'T00:00:00')
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }
-  return date.toLocaleDateString('ar-EG', options)
+  const date = new Date(dateStr + 'T00:00:00');
+  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  const dayName = days[date.getDay()];
+  return `${dayName} ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 }
 
 function formatTime(timeStr: string) {
-  const [h, m] = timeStr.split(':')
-  const hour = parseInt(h, 10)
-  if (hour < 12) return `${hour}:${m} صباحاً`
-  if (hour === 12) return `12:${m} مساءً`
-  return `${hour - 12}:${m} مساءً`
+  const [h, m] = timeStr.split(':');
+  const hour = parseInt(h);
+  if (hour === 16) return `4:${m} عصراً`;
+  if (hour === 17) return `5:${m} مساءً`;
+  if (hour === 18) return `6:${m} مساءً`;
+  if (hour === 19) return `7:${m} مساءً`;
+  if (hour === 20) return `8:${m} مساءً`;
+  if (hour === 21) return `9:${m} مساءً`;
+  return `${hour}:${m}`;
 }
 
-export default async function BookPage(props: { params: Promise<{ slotId: string }> }) {
-  const params = await props.params
-  const supabase = await createClient()
+export default async function BookPage({
+  params,
+}: {
+  params: Promise<{ slotId: string }>;
+}) {
+  const { slotId } = await params;
+  const supabase = await createClient();
 
   const { data: slot, error } = await supabase
     .from('time_slots')
     .select('*')
-    .eq('id', params.slotId)
-    .single()
+    .eq('id', slotId)
+    .single();
 
-  if (error || !slot || !slot.is_available) {
-    notFound()
+  if (error || !slot) {
+    notFound();
   }
 
-  // Check if slot is in the past
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const slotDate = new Date(slot.slot_date + 'T00:00:00')
-  if (slotDate < today) {
-    notFound()
+  if (!slot.is_available) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 text-lg font-semibold">هذا الموعد غير متاح</p>
+        <p className="text-gray-500 mt-2">لقد تم حجز هذا الموعد مسبقاً.</p>
+        <a
+          href="/"
+          className="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
+        >
+          العودة للمواعيد المتاحة
+        </a>
+      </div>
+    );
   }
 
   return (
     <div>
-      <div className="bg-white border border-green-200 rounded-xl p-6 mb-6 shadow-sm">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">تأكيد الحجز</h2>
-        <div className="bg-green-50 rounded-lg p-4 mb-6">
-          <p className="text-gray-700 mb-1">
-            <span className="font-semibold">التاريخ:</span> {formatDate(slot.slot_date)}
-          </p>
-          <p className="text-gray-700 mb-1">
-            <span className="font-semibold">الوقت:</span> {formatTime(slot.slot_time)}
-          </p>
-          <p className="text-gray-700">
-            <span className="font-semibold">المدة:</span> ساعة واحدة
-          </p>
-        </div>
-
-        <SlotBookingForm slotId={slot.id} />
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6 text-center">
+        <h2 className="text-lg font-semibold text-gray-700 mb-1">حجز موعد</h2>
+        <p className="text-2xl font-bold text-blue-700 mt-2">
+          {formatDate(slot.slot_date)}
+        </p>
+        <p className="text-xl text-gray-600 mt-1">
+          الساعة {formatTime(slot.slot_time)}
+        </p>
+        <p className="text-sm text-gray-400 mt-3">
+          مدة الجلسة 60 دقيقة — الدفع 100 جنيه عند الحضور
+        </p>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-700">
-        <p className="font-semibold">تذكير:</p>
-        <p>الدفع نقداً عند الحضور بقيمة ١٠٠ جنيه مصري. من فضلك احضر المبلغ مضبوطاً.</p>
-      </div>
+      <SlotBookingForm slotId={slot.id} />
     </div>
-  )
+  );
 }

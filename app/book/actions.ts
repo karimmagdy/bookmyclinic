@@ -1,69 +1,61 @@
-'use server'
+'use server';
 
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
-export async function bookSlot(slotId: string, formData: FormData) {
-  const name = formData.get('name') as string
-  const phone = formData.get('phone') as string
+export async function bookSlot(
+  slotId: string,
+  data: { name: string; phone: string }
+) {
+  const supabase = await createClient();
 
-  if (!name || !name.trim()) {
-    return { error: 'من فضلك أدخل الاسم' }
-  }
-  if (!phone || !phone.trim()) {
-    return { error: 'من فضلك أدخل رقم الهاتف' }
-  }
-  if (phone.trim().length < 10) {
-    return { error: 'رقم الهاتف غير صحيح' }
-  }
-
-  const supabase = await createClient()
-
-  // Check the slot is still available
+  // Check slot is still available
   const { data: slot, error: slotError } = await supabase
     .from('time_slots')
     .select('*')
     .eq('id', slotId)
-    .eq('is_available', true)
-    .single()
+    .single();
 
   if (slotError || !slot) {
-    return { error: 'عذراً، هذا الموعد لم يعد متاحاً. من فضلك اختر موعداً آخر.' }
+    return { error: 'الموعد غير موجود.' };
+  }
+
+  if (!slot.is_available) {
+    return { error: 'لقد تم حجز هذا الموعد مسبقاً. اختر موعداً آخر.' };
   }
 
   // Check slot is not in the past
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const slotDate = new Date(slot.slot_date + 'T00:00:00')
-  if (slotDate < today) {
-    return { error: 'عذراً، هذا الموعد في الماضي. من فضلك اختر موعداً آخر.' }
+  const today = new Date().toISOString().split('T')[0];
+  if (slot.slot_date < today) {
+    return { error: 'لا يمكن حجز موعد في الماضي.' };
   }
 
-  // Insert the booking
-  const { data: booking, error: bookingError } = await supabase
+  // Create the booking
+  const { data: booking, error: insertError } = await supabase
     .from('bookings')
     .insert({
       slot_id: slotId,
-      patient_name: name.trim(),
-      patient_phone: phone.trim(),
+      patient_name: data.name,
+      patient_phone: data.phone,
     })
-    .select('id')
-    .single()
+    .select()
+    .single();
 
-  if (bookingError || !booking) {
-    return { error: 'عذراً، حدث خطأ أثناء الحجز. حاول مرة أخرى.' }
+  if (insertError || !booking) {
+    console.error('Insert error:', insertError?.message);
+    return { error: 'حدث خطأ أثناء الحجز. حاول مرة أخرى.' };
   }
 
   // Mark slot as unavailable
   const { error: updateError } = await supabase
     .from('time_slots')
     .update({ is_available: false })
-    .eq('id', slotId)
+    .eq('id', slotId);
 
   if (updateError) {
-    // Non-critical: booking exists but slot wasn't marked. Still redirect.
-    console.error('Failed to mark slot as unavailable:', updateError)
+    console.error('Update error:', updateError.message);
+    // Booking was created but slot wasn't marked — it's okay, we'll show it as booked
   }
 
-  return { redirect: `/confirmation/${booking.id}` }
+  redirect(`/confirmation/${booking.id}`);
 }
