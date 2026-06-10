@@ -1,12 +1,12 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useFormState } from 'react-dom'
 import { bookSlot } from '../actions'
 
 const initialState: { error?: string; fieldErrors?: { name?: string; phone?: string } } = {}
 
 export default function SlotBookingForm({ slotId }: { slotId: string }) {
-  const [state, formAction, isPending] = useActionState(
+  const [state, formAction] = useFormState(
     async (_prev: typeof initialState, formData: FormData) => {
       formData.set('slotId', slotId)
       return bookSlot(formData)
@@ -56,10 +56,9 @@ export default function SlotBookingForm({ slotId }: { slotId: string }) {
 
       <button
         type="submit"
-        disabled={isPending}
         className="w-full bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 hover:bg-blue-800 disabled:opacity-50 transition-colors"
       >
-        {isPending ? 'Booking...' : 'Confirm Booking'}
+        Book Now
       </button>
     </form>
   )
