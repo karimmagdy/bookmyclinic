@@ -1,87 +1,80 @@
-import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { notFound } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import Link from 'next/link'
 
 function formatDate(dateStr: string) {
-  const date = new Date(dateStr + 'T00:00:00');
-  const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-  const dayName = days[date.getDay()];
-  return `${dayName} ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
 }
 
 function formatTime(timeStr: string) {
-  const [h, m] = timeStr.split(':');
-  const hour = parseInt(h);
-  if (hour === 16) return `4:${m} عصراً`;
-  if (hour === 17) return `5:${m} مساءً`;
-  if (hour === 18) return `6:${m} مساءً`;
-  if (hour === 19) return `7:${m} مساءً`;
-  if (hour === 20) return `8:${m} مساءً`;
-  if (hour === 21) return `9:${m} مساءً`;
-  return `${hour}:${m}`;
+  const [h, m] = timeStr.split(':')
+  const hour = parseInt(h, 10)
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const hour12 = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
+  return `${hour12}:${m} ${ampm}`
 }
 
 export default async function ConfirmationPage({
   params,
 }: {
-  params: Promise<{ bookingId: string }>;
+  params: Promise<{ bookingId: string }>
 }) {
-  const { bookingId } = await params;
-  const supabase = await createClient();
+  const { bookingId } = await params
+  const supabase = await createClient()
 
   const { data: booking, error } = await supabase
     .from('bookings')
-    .select(`
-      *,
-      slot:time_slots(*)
-    `)
+    .select('id, patient_name, patient_phone, created_at, slot:time_slots!inner(slot_date, slot_time)')
     .eq('id', bookingId)
-    .single();
+    .single()
 
   if (error || !booking) {
-    notFound();
+    notFound()
   }
 
+  const slot = booking.slot as unknown as { slot_date: string; slot_time: string }
+
   return (
-    <div className="text-center">
-      <div className="bg-green-50 border border-green-200 rounded-xl p-8 mb-6">
-        <div className="text-5xl mb-4">✅</div>
-        <h2 className="text-2xl font-bold text-green-800 mb-2">تم الحجز بنجاح!</h2>
-        <p className="text-green-600">شكراً لك {booking.patient_name}</p>
-      </div>
+    <div className="bg-white border border-green-200 rounded-xl p-6 text-center max-w-md mx-auto">
+      <div className="text-5xl mb-4">✅</div>
+      <h1 className="text-2xl font-bold text-green-800 mb-2">Appointment Booked!</h1>
+      <p className="text-gray-600 mb-6">
+        Your appointment is confirmed. See you at the clinic.
+      </p>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-700 mb-3">تفاصيل الموعد</h3>
-        <div className="space-y-2">
-          <p className="text-gray-600">
-            <span className="font-medium">اليوم والتاريخ:</span>{' '}
-            {formatDate(booking.slot.slot_date)}
-          </p>
-          <p className="text-gray-600">
-            <span className="font-medium">الوقت:</span>{' '}
-            {formatTime(booking.slot.slot_time)}
-          </p>
-          <p className="text-gray-600">
-            <span className="font-medium">الاسم:</span> {booking.patient_name}
-          </p>
-          <p className="text-gray-600">
-            <span className="font-medium">رقم الهاتف:</span> {booking.patient_phone}
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-        <p className="text-yellow-800 font-medium">💰 الدفع نقداً عند الحضور — 100 جنيه</p>
-        <p className="text-yellow-600 text-sm mt-1">
-          يرجى الحضور في الموعد المحدد. إذا كنت ترغب في إلغاء الحجز، يرجى الاتصال بالعيادة.
+      <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-2">
+        <p>
+          <span className="font-medium text-gray-700">Name:</span>{' '}
+          {booking.patient_name}
+        </p>
+        <p>
+          <span className="font-medium text-gray-700">Phone:</span>{' '}
+          {booking.patient_phone}
+        </p>
+        <p>
+          <span className="font-medium text-gray-700">Date:</span>{' '}
+          {formatDate(slot.slot_date)}
+        </p>
+        <p>
+          <span className="font-medium text-gray-700">Time:</span>{' '}
+          {formatTime(slot.slot_time)}
+        </p>
+        <p className="pt-2 text-sm text-gray-500">
+          💵 Please bring <strong>100 EGP</strong> in cash to the clinic.
         </p>
       </div>
 
-      <a
+      <Link
         href="/"
-        className="inline-block mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+        className="inline-block bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 hover:bg-blue-800 transition-colors"
       >
-        العودة للصفحة الرئيسية
-      </a>
+        Book Another Appointment
+      </Link>
     </div>
-  );
+  )
 }

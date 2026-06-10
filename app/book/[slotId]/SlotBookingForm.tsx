@@ -1,92 +1,66 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { bookSlot } from '../actions';
+import { useActionState } from 'react'
+import { bookSlot } from '../actions'
+
+const initialState: { error?: string; fieldErrors?: { name?: string; phone?: string } } = {}
 
 export default function SlotBookingForm({ slotId }: { slotId: string }) {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!name.trim()) {
-      setError('يرجى إدخال الاسم');
-      return;
-    }
-    if (!phone.trim()) {
-      setError('يرجى إدخال رقم الهاتف');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const result = await bookSlot(slotId, { name: name.trim(), phone: phone.trim() });
-      if (result?.error) {
-        setError(result.error);
-        setLoading(false);
-      }
-    } catch {
-      setError('حدث خطأ أثناء الحجز. حاول مرة أخرى.');
-      setLoading(false);
-    }
-  };
+  const [state, formAction, isPending] = useActionState(
+    async (_prev: typeof initialState, formData: FormData) => {
+      formData.set('slotId', slotId)
+      return bookSlot(formData)
+    },
+    initialState
+  )
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl p-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-3 mb-4 text-sm">
-          {error}
+    <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-6 max-w-md">
+      {state?.error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+          {state.error}
         </div>
       )}
 
-      <div className="mb-4">
-        <label htmlFor="name" className="block text-gray-700 font-medium mb-1">
-          الاسم الكامل
-        </label>
-        <input
-          id="name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="مثال: أحمد محمد"
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          disabled={loading}
-          autoComplete="name"
-        />
-      </div>
+      <label className="block mb-1 text-sm font-medium text-gray-700">
+        Your Name
+      </label>
+      <input
+        type="text"
+        name="name"
+        required
+        className="block w-full rounded-lg border border-gray-300 px-4 py-3 mb-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="e.g. Ahmed Ali"
+      />
+      {state?.fieldErrors?.name && (
+        <p className="text-red-600 text-sm -mt-3 mb-4">{state.fieldErrors.name}</p>
+      )}
 
-      <div className="mb-6">
-        <label htmlFor="phone" className="block text-gray-700 font-medium mb-1">
-          رقم الهاتف
-        </label>
-        <input
-          id="phone"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="مثال: 01012345678"
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          disabled={loading}
-          autoComplete="tel"
-        />
-      </div>
+      <label className="block mb-1 text-sm font-medium text-gray-700">
+        Phone Number
+      </label>
+      <input
+        type="tel"
+        name="phone"
+        required
+        className="block w-full rounded-lg border border-gray-300 px-4 py-3 mb-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="e.g. 01234567890"
+      />
+      {state?.fieldErrors?.phone && (
+        <p className="text-red-600 text-sm -mt-3 mb-4">{state.fieldErrors.phone}</p>
+      )}
+
+      <p className="text-sm text-gray-500 mb-4">
+        💵 Pay <strong>100 EGP</strong> in cash when you arrive.
+      </p>
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isPending}
+        className="w-full bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 hover:bg-blue-800 disabled:opacity-50 transition-colors"
       >
-        {loading ? 'جاري الحجز...' : 'تأكيد الحجز'}
+        {isPending ? 'Booking...' : 'Confirm Booking'}
       </button>
-
-      <p className="text-xs text-gray-400 text-center mt-4">
-        سيتم الدفع نقداً عند الحضور — 100 جنيه
-      </p>
     </form>
-  );
+  )
 }
