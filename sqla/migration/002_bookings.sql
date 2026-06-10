@@ -1,0 +1,3 @@
+-- Migration file for documentation purposes.
+-- Schema + seeds are applied via supabase_run_migration in Stage 1.
+-- See the actual SQL calls in the stage execution.
