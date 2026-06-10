@@ -21,7 +21,8 @@ function formatTime(timeStr: string) {
   return `${hour - 12}:${m} مساءً`
 }
 
-export default async function ConfirmationPage({ params }: { params: { bookingId: string } }) {
+export default async function ConfirmationPage(props: { params: Promise<{ bookingId: string }> }) {
+  const params = await props.params
   const supabase = await createClient()
 
   const { data: booking, error } = await supabase

@@ -21,7 +21,8 @@ function formatTime(timeStr: string) {
   return `${hour - 12}:${m} مساءً`
 }
 
-export default async function BookPage({ params }: { params: { slotId: string } }) {
+export default async function BookPage(props: { params: Promise<{ slotId: string }> }) {
+  const params = await props.params
   const supabase = await createClient()
 
   const { data: slot, error } = await supabase
