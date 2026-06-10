@@ -23,9 +23,9 @@ function formatTime(timeStr: string) {
 export default async function BookSlotPage({
   params,
 }: {
-  params: Promise<{ slotId: string }>
+  params: { slotId: string }
 }) {
-  const { slotId } = await params
+  const { slotId } = params
   const supabase = await createClient()
 
   const { data: slot, error } = await supabase

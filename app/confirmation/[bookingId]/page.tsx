@@ -22,9 +22,9 @@ function formatTime(timeStr: string) {
 export default async function ConfirmationPage({
   params,
 }: {
-  params: Promise<{ bookingId: string }>
+  params: { bookingId: string }
 }) {
-  const { bookingId } = await params
+  const { bookingId } = params
   const supabase = await createClient()
 
   const { data: booking, error } = await supabase
