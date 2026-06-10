@@ -3,7 +3,6 @@ export interface TimeSlot {
   slot_date: string;
   slot_time: string;
   is_available: boolean;
-  created_at: string;
 }
 
 export interface Booking {
@@ -12,4 +11,8 @@ export interface Booking {
   patient_name: string;
   patient_phone: string;
   created_at: string;
+}
+
+export interface BookingWithSlot extends Booking {
+  slot: TimeSlot;
 }
