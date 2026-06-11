@@ -1,4 +1,2 @@
-import { redirect } from 'next/navigation';
-export default function ConfirmationBookingIdShim({ params }) {
-  redirect(`/booked/${params.bookingId}`);
-}
+// Legacy stub — not a page route. Real confirmation is at /booked/:id
+export const _stub = true;
