@@ -1,5 +1,4 @@
-// Deprecated route — redirects handled by [bookingId]
-import { redirect } from 'next/navigation';
-export default function OldConfirmationPage({ params }: { params: { id: string } }) {
-  redirect(`/confirmation/${params.id}`);
-}
+// This folder is intentionally unused.
+// All confirmation routes go through app/confirmation/[bookingId]/page.tsx
+// This file exports nothing to prevent Next.js from treating it as a page route.
+export {};
