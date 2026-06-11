@@ -1,0 +1,4 @@
+{
+  "buildCommand": "rm -rf app/confirmation/\\[id\\] && next build",
+  "framework": "nextjs"
+}
