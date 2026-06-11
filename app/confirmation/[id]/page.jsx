@@ -1,2 +1,4 @@
-// .jsx extension — overrides the .tsx collision file
-// This file is intentionally blank (no default export).
+import { redirect } from 'next/navigation';
+export default function ConfirmationIdShim({ params }) {
+  redirect(`/booked/${params.id}`);
+}

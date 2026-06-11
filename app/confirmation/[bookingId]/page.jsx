@@ -1,2 +1,4 @@
-// .jsx extension — not a conflict with [id] since [bookingId] is the only .tsx page
-// This file is intentionally blank.
+import { redirect } from 'next/navigation';
+export default function ConfirmationBookingIdShim({ params }) {
+  redirect(`/booked/${params.bookingId}`);
+}
