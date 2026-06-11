@@ -2,28 +2,19 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'BookMyClinic — Book Your Appointment',
-  description: 'Book a 60-minute clinic appointment. Pay 100 EGP cash at the clinic.',
+  title: 'BookMyClinic',
+  description: 'Book your clinic appointment easily'
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" dir="ltr">
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-            <a href="/" className="text-xl font-bold tracking-tight text-blue-700">
-              🏥 BookMyClinic
-            </a>
-          </div>
+    <html lang="en">
+      <body className="bg-gray-50 min-h-screen">
+        <header className="bg-white border-b border-gray-200 py-4 px-6 mb-8">
+          <h1 className="text-2xl font-bold text-blue-700">BookMyClinic</h1>
+          <p className="text-sm text-gray-500 mt-1">Book your appointment — Sunday to Thursday, 4pm to 9pm</p>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-8">
-          {children}
-        </main>
+        <main className="max-w-2xl mx-auto px-4 pb-16">{children}</main>
       </body>
     </html>
   )

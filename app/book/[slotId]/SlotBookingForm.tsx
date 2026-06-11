@@ -1,64 +1,55 @@
 'use client'
-
 import { useFormState } from 'react-dom'
-import { bookSlot } from '../actions'
+import { bookSlot } from '@/app/book/actions'
 
-const initialState: { error?: string; fieldErrors?: { name?: string; phone?: string } } = {}
+type FormState = { error: string | null }
+const initialState: FormState = { error: null }
 
 export default function SlotBookingForm({ slotId }: { slotId: string }) {
-  const [state, formAction] = useFormState(
-    async (_prev: typeof initialState, formData: FormData) => {
-      formData.set('slotId', slotId)
-      return bookSlot(formData)
-    },
-    initialState
-  )
+  const boundAction = async (_prevState: FormState, formData: FormData) => {
+    return bookSlot(slotId, formData)
+  }
+  const [state, formAction] = useFormState(boundAction, initialState)
 
   return (
-    <form action={formAction} className="bg-white border border-gray-200 rounded-xl p-6 max-w-md">
+    <form action={formAction} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+      <h2 className="text-lg font-semibold text-gray-800">Your Details</h2>
+
       {state?.error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
           {state.error}
         </div>
       )}
 
-      <label className="block mb-1 text-sm font-medium text-gray-700">
-        Your Name
-      </label>
-      <input
-        type="text"
-        name="name"
-        required
-        className="block w-full rounded-lg border border-gray-300 px-4 py-3 mb-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="e.g. Ahmed Ali"
-      />
-      {state?.fieldErrors?.name && (
-        <p className="text-red-600 text-sm -mt-3 mb-4">{state.fieldErrors.name}</p>
-      )}
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          placeholder="Enter your full name"
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
 
-      <label className="block mb-1 text-sm font-medium text-gray-700">
-        Phone Number
-      </label>
-      <input
-        type="tel"
-        name="phone"
-        required
-        className="block w-full rounded-lg border border-gray-300 px-4 py-3 mb-4 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="e.g. 01234567890"
-      />
-      {state?.fieldErrors?.phone && (
-        <p className="text-red-600 text-sm -mt-3 mb-4">{state.fieldErrors.phone}</p>
-      )}
-
-      <p className="text-sm text-gray-500 mb-4">
-        💵 Pay <strong>100 EGP</strong> in cash when you arrive.
-      </p>
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          required
+          placeholder="Enter your phone number"
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+        />
+      </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 hover:bg-blue-800 disabled:opacity-50 transition-colors"
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-base transition-colors"
       >
-        Book Now
+        Confirm Booking
       </button>
     </form>
   )
