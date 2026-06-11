@@ -32,5 +32,5 @@ export async function bookSlot(formData: FormData) {
     .update({ is_available: false })
     .eq('id', slotId);
 
-  redirect(`/confirmation/${booking.id}`);
+  redirect(`/booked/${booking.id}`);
 }
