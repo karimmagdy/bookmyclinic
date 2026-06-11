@@ -2,27 +2,26 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function bookSlot(
-  slotId: string,
-  formData: FormData
-): Promise<{ error: string }> {
-  const name = (formData.get('name') as string | null)?.trim() ?? ''
-  const phone = (formData.get('phone') as string | null)?.trim() ?? ''
+export async function bookSlot(formData: FormData): Promise<never> {
+  const slotId = (formData.get('slotId') as string | null)?.trim() ?? ''
+  const name   = (formData.get('name')   as string | null)?.trim() ?? ''
+  const phone  = (formData.get('phone')  as string | null)?.trim() ?? ''
 
-  if (!name) return { error: 'Please enter your full name.' }
-  if (!phone) return { error: 'Please enter your phone number.' }
+  if (!slotId) redirect('/?error=missing_slot')
+  if (!name)   redirect(`/book/${slotId}?error=missing_name`)
+  if (!phone)  redirect(`/book/${slotId}?error=missing_phone`)
 
   const supabase = await createClient()
 
-  // Check slot is still available
+  // Re-check availability
   const { data: slot, error: slotError } = await supabase
     .from('time_slots')
     .select('id, is_available')
     .eq('id', slotId)
     .single()
 
-  if (slotError || !slot) return { error: 'This slot could not be found. Please go back and choose another.' }
-  if (!slot.is_available) return { error: 'Sorry, this slot was just booked. Please go back and choose another time.' }
+  if (slotError || !slot) redirect(`/book/${slotId}?error=not_found`)
+  if (!slot.is_available)  redirect(`/book/${slotId}?error=taken`)
 
   // Insert booking
   const { data: booking, error: insertError } = await supabase
@@ -31,7 +30,7 @@ export async function bookSlot(
     .select('id')
     .single()
 
-  if (insertError || !booking) return { error: 'Could not save your booking. Please try again.' }
+  if (insertError || !booking) redirect(`/book/${slotId}?error=db_error`)
 
   // Mark slot unavailable
   await supabase

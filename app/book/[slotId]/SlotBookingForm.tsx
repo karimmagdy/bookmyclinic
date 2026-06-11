@@ -1,28 +1,21 @@
 'use client'
-import { useFormState } from 'react-dom'
 import { bookSlot } from '@/app/book/actions'
 
-type FormState = { error: string | null }
-const initialState: FormState = { error: null }
-
 export default function SlotBookingForm({ slotId }: { slotId: string }) {
-  const boundAction = async (_prevState: FormState, formData: FormData) => {
-    return bookSlot(slotId, formData)
-  }
-  const [state, formAction] = useFormState(boundAction, initialState)
-
   return (
-    <form action={formAction} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5">
+    <form
+      action={bookSlot}
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-5"
+    >
+      {/* hidden field so server action receives slotId */}
+      <input type="hidden" name="slotId" value={slotId} />
+
       <h2 className="text-lg font-semibold text-gray-800">Your Details</h2>
 
-      {state?.error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
-          {state.error}
-        </div>
-      )}
-
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+          Full Name
+        </label>
         <input
           id="name"
           name="name"
@@ -34,7 +27,9 @@ export default function SlotBookingForm({ slotId }: { slotId: string }) {
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+          Phone Number
+        </label>
         <input
           id="phone"
           name="phone"
