@@ -10,15 +10,9 @@ export async function createClient() {
     {
       db: { schema: process.env.SUPABASE_SCHEMA! },
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
+        getAll() { return cookieStore.getAll(); },
         setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {}
+          try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); } catch {}
         }
       }
     }

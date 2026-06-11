@@ -13,11 +13,11 @@ export async function bookSlot(formData: FormData) {
 
   const { data: slot } = await supabase
     .from('time_slots')
-    .select('id, is_available')
+    .select('is_available')
     .eq('id', slotId)
     .single();
 
-  if (!slot || !slot.is_available) redirect('/?error=unavailable');
+  if (!slot?.is_available) redirect('/?error=taken');
 
   const { data: booking, error } = await supabase
     .from('bookings')
@@ -32,5 +32,5 @@ export async function bookSlot(formData: FormData) {
     .update({ is_available: false })
     .eq('id', slotId);
 
-  redirect(`/booked/${booking.id}`);
+  redirect(`/confirmation/${booking.id}`);
 }

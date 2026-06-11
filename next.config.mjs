@@ -1,13 +1,3 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/confirmation/:id',
-        destination: '/booked/:id',
-        permanent: false
-      }
-    ];
-  }
-};
+const nextConfig = {};
 export default nextConfig;
